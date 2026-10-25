@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../services/storage_service.dart';
-import 'onboarding_screen.dart';
 import 'main_nav_screen.dart';
+import 'auth_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final StorageService storageService;
@@ -42,30 +42,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.delayed(const Duration(milliseconds: 1500));
     if (!mounted) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    if (widget.storageService.isOnboardingDone) {
-      if (authProvider.isAuthenticated) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainNavScreen()),
-        );
-      } else {
-        // Automatically sign in as student demo if desired or open MainNav
-        await authProvider.demoLoginAsStudent();
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainNavScreen()),
-        );
-      }
+    // If already logged in, go to main dashboard; otherwise start at Login & Sign Up page!
+    if (authProvider.isAuthenticated) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavScreen()),
+      );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
       );
     }
   }

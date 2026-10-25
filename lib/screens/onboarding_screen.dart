@@ -4,8 +4,6 @@ import '../constants/app_colors.dart';
 import '../services/storage_service.dart';
 import '../widgets/custom_button.dart';
 import 'auth_screen.dart';
-import 'main_nav_screen.dart';
-import '../providers/auth_provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -41,14 +39,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _finishOnboarding() async {
     final storage = Provider.of<StorageService>(context, listen: false);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
     await storage.setOnboardingDone(true);
-    await auth.demoLoginAsStudent(); // Provide immediate frictionless access
 
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const MainNavScreen()),
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
     );
   }
 
