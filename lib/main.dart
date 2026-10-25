@@ -9,7 +9,7 @@ import 'services/notification_service.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/event_provider.dart';
-import 'screens/splash_screen.dart';
+import 'screens/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,7 +77,7 @@ class CampusEventHubApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: SplashScreen(storageService: storageService),
+            home: const AuthScreen(),
           );
         },
       ),
