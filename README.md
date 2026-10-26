@@ -140,15 +140,4 @@ flutter test
 
 ---
 
-## 👥 Team Members & Suggested Roles
 
-1. **Student 1 (Team Leader)**: Project Management, Provider State Architecture, System Integration.
-2. **Student 2 (UI/UX Designer)**: Material 3 Design System, Color Tokens, Responsive Layouts.
-3. **Student 3 (Flutter Developer)**: Screens Development, Form Validations, QR Ticket Generation.
-4. **Student 4 (Backend & API Developer)**: REST API Integration, JSON Serialization, SharedPreferences Local Storage.
-5. **Student 5 (QA & Documentation Lead)**: Unit Testing, Widget Testing, Academic Reports, Slide Presentation.
-
----
-
-## 📄 License
-Academic Course Project — Developed for Flutter Hybrid Mobile Application Development Course.
