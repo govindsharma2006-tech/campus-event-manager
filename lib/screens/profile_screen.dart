@@ -215,28 +215,6 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 18),
 
-            // Academic Course Info Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : AppColors.cardLight,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: isDark ? AppColors.borderDark : AppColors.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Course & Project Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  _buildDetailLine('Course', 'Flutter Hybrid Mobile App Development'),
-                  _buildDetailLine('Assessment', 'Classroom Project (100 Marks)'),
-                  _buildDetailLine('Project Name', 'CampusEventHub (Smart Event & Fest Platform)'),
-                  _buildDetailLine('Version', 'v1.0.0 Stable (Dart 3.12 / Flutter 3.44)'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
             // Logout Button
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
@@ -261,24 +239,6 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 40),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailLine(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 95,
-            child: Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-          ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
-        ],
       ),
     );
   }

@@ -398,9 +398,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Toggle between Sign In and Sign Up
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             _isSignUp ? 'Already have an account? ' : "Don't have an account? ",

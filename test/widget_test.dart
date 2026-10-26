@@ -1,6 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:campus_event_hub/models/event_model.dart';
 import 'package:campus_event_hub/models/registration_model.dart';
+import 'package:campus_event_hub/services/storage_service.dart';
+import 'package:campus_event_hub/providers/auth_provider.dart';
+import 'package:campus_event_hub/screens/auth_screen.dart';
 
 void main() {
   group('CampusEventHub Model Tests', () {
@@ -59,6 +65,35 @@ void main() {
       final decoded = RegistrationModel.fromJson(jsonStr);
       expect(decoded.ticketId, reg.ticketId);
       expect(decoded.studentRollNo, '23CSB1042');
+    });
+
+    testWidgets('AuthScreen renders clean login card and toggles to Sign Up', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final storage = StorageService(prefs);
+      final authProvider = AuthProvider(storage);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider<AuthProvider>.value(
+            value: authProvider,
+            child: const AuthScreen(),
+          ),
+        ),
+      );
+
+      expect(find.text('Campus Event Manager'), findsOneWidget);
+      expect(find.text('Sign in to manage and register for events'), findsOneWidget);
+      expect(find.text('Student Demo'), findsOneWidget);
+      expect(find.text('Sign In'), findsOneWidget); // Button
+      expect(find.text('Sign Up'), findsOneWidget); // Toggle link
+
+      // Tap Sign Up toggle
+      await tester.tap(find.text('Sign Up'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Create Account'), findsOneWidget);
+      expect(find.text('Full Name'), findsOneWidget);
     });
   });
 }
