@@ -33,15 +33,16 @@ class AuthProvider extends ChangeNotifier {
       // Simulate network / auth latency
       await Future.delayed(const Duration(milliseconds: 600));
 
-      if (email.isEmpty || password.isEmpty) {
+      // --- Input Validation ---
+      if (email.trim().isEmpty || password.isEmpty) {
         _errorMessage = 'Email and password are required.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      if (!email.contains('@')) {
-        _errorMessage = 'Please enter a valid university email address.';
+      if (!_isValidEmail(email.trim())) {
+        _errorMessage = 'Please enter a valid email address.';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -54,22 +55,25 @@ class AuthProvider extends ChangeNotifier {
         return false;
       }
 
-      // Determine role based on email or credentials
-      final bool isCoord = email.toLowerCase().contains('club') || email.toLowerCase().contains('coord') || email.toLowerCase().contains('admin');
-      
-      _currentUser = UserModel(
-        id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
-        name: email.split('@')[0].toUpperCase(),
-        email: email,
-        rollNo: '23CSB${(100 + (DateTime.now().millisecond % 899))}',
-        department: 'Computer Science & Engineering',
-        semester: '6th Semester',
-        phone: '+91 98765 12345',
-        role: isCoord ? 'coordinator' : 'student',
-        clubName: isCoord ? 'Tech & Robotics Club' : null,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-      );
+      // --- Check if user is registered ---
+      if (!_storage.isEmailRegistered(email.trim())) {
+        _errorMessage = 'No account found with this email. Please sign up first.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
 
+      // --- Verify password against stored hash ---
+      final user = _storage.verifyLogin(email.trim(), password);
+      if (user == null) {
+        _errorMessage = 'Incorrect password. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // --- Login successful ---
+      _currentUser = user;
       await _storage.saveUser(_currentUser!);
       await _storage.setLoggedIn(true);
 
@@ -102,11 +106,49 @@ class AuthProvider extends ChangeNotifier {
     try {
       await Future.delayed(const Duration(milliseconds: 600));
 
-      _currentUser = UserModel(
+      // --- Input Validation ---
+      if (name.trim().isEmpty) {
+        _errorMessage = 'Please enter your full name.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      if (email.trim().isEmpty || !_isValidEmail(email.trim())) {
+        _errorMessage = 'Please enter a valid email address.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      if (rollNo.trim().isEmpty) {
+        _errorMessage = 'Please enter your Roll Number / Student ID.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      if (password.length < 6) {
+        _errorMessage = 'Password must be at least 6 characters.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // --- Check if email is already registered ---
+      if (_storage.isEmailRegistered(email.trim())) {
+        _errorMessage = 'An account with this email already exists. Please sign in.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // --- Create user model ---
+      final newUser = UserModel(
         id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
-        email: email,
-        rollNo: rollNo,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        rollNo: rollNo.trim(),
         department: department,
         semester: semester,
         phone: phone,
@@ -115,6 +157,17 @@ class AuthProvider extends ChangeNotifier {
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
       );
 
+      // --- Save to registered users database with hashed password ---
+      final registered = await _storage.registerUser(newUser, password);
+      if (!registered) {
+        _errorMessage = 'Registration failed. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // --- Auto login after registration ---
+      _currentUser = newUser;
       await _storage.saveUser(_currentUser!);
       await _storage.setLoggedIn(true);
 
@@ -129,40 +182,12 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Quick Login for classroom demonstration
-  Future<void> demoLoginAsStudent() async {
-    _currentUser = UserModel(
-      id: 'student_demo_1',
-      name: 'Aarav Sharma',
-      email: 'aarav.sharma@campus.edu',
-      rollNo: '23CSB1042',
-      department: 'Computer Science & Engineering',
-      semester: '6th Semester',
-      phone: '+91 98765 43210',
-      role: 'student',
-      avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400',
+  /// Validates email format properly
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
     );
-    await _storage.saveUser(_currentUser!);
-    await _storage.setLoggedIn(true);
-    notifyListeners();
-  }
-
-  Future<void> demoLoginAsCoordinator() async {
-    _currentUser = UserModel(
-      id: 'coord_demo_1',
-      name: 'Dr. Priya Verma',
-      email: 'priya.verma@campus.edu',
-      rollNo: 'FAC-CS-088',
-      department: 'Information Technology',
-      semester: 'Faculty / Club Convener',
-      phone: '+91 98111 22334',
-      role: 'coordinator',
-      clubName: 'TechNova & AI Club',
-      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400',
-    );
-    await _storage.saveUser(_currentUser!);
-    await _storage.setLoggedIn(true);
-    notifyListeners();
+    return emailRegex.hasMatch(email);
   }
 
   void switchRole(String newRole) async {

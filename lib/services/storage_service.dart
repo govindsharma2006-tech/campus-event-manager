@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/event_model.dart';
 import '../models/registration_model.dart';
@@ -12,6 +13,7 @@ class StorageService {
   static const String _keyCustomEvents = 'campus_custom_events';
   static const String _keyRegistrations = 'campus_user_registrations';
   static const String _keyBookmarks = 'campus_bookmarks';
+  static const String _keyRegisteredUsers = 'campus_registered_users';
 
   final SharedPreferences _prefs;
 
@@ -20,6 +22,72 @@ class StorageService {
   static Future<StorageService> init() async {
     final prefs = await SharedPreferences.getInstance();
     return StorageService(prefs);
+  }
+
+  // --- Password Hashing ---
+  String _hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    return sha256.convert(bytes).toString();
+  }
+
+  // --- Registered Users Database ---
+  /// Returns map of email -> { userData, passwordHash }
+  Map<String, dynamic> _getRegisteredUsersMap() {
+    final usersJson = _prefs.getString(_keyRegisteredUsers);
+    if (usersJson == null) return {};
+    try {
+      return Map<String, dynamic>.from(json.decode(usersJson));
+    } catch (e) {
+      return {};
+    }
+  }
+
+  Future<void> _saveRegisteredUsersMap(Map<String, dynamic> usersMap) async {
+    await _prefs.setString(_keyRegisteredUsers, json.encode(usersMap));
+  }
+
+  /// Check if a user with this email is already registered
+  bool isEmailRegistered(String email) {
+    final users = _getRegisteredUsersMap();
+    return users.containsKey(email.toLowerCase().trim());
+  }
+
+  /// Register a new user with email & hashed password
+  Future<bool> registerUser(UserModel user, String password) async {
+    final users = _getRegisteredUsersMap();
+    final emailKey = user.email.toLowerCase().trim();
+
+    if (users.containsKey(emailKey)) {
+      return false; // Already registered
+    }
+
+    users[emailKey] = {
+      'userData': user.toMap(),
+      'passwordHash': _hashPassword(password),
+    };
+
+    await _saveRegisteredUsersMap(users);
+    return true;
+  }
+
+  /// Verify login credentials — returns the UserModel if valid, null if invalid
+  UserModel? verifyLogin(String email, String password) {
+    final users = _getRegisteredUsersMap();
+    final emailKey = email.toLowerCase().trim();
+
+    if (!users.containsKey(emailKey)) {
+      return null; // Not registered
+    }
+
+    final entry = Map<String, dynamic>.from(users[emailKey]);
+    final storedHash = entry['passwordHash'] as String;
+    final inputHash = _hashPassword(password);
+
+    if (storedHash != inputHash) {
+      return null; // Wrong password
+    }
+
+    return UserModel.fromMap(Map<String, dynamic>.from(entry['userData']));
   }
 
   // --- Onboarding & Auth State ---

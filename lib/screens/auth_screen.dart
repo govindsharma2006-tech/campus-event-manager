@@ -17,17 +17,18 @@ class _AuthScreenState extends State<AuthScreen> {
 
   // Controllers
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'student@campus.edu');
-  final _passwordController = TextEditingController(text: 'campus123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _nameController = TextEditingController();
   final _rollController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   String _selectedRole = 'student'; // 'student' or 'coordinator'
 
   // Primary Theme Purple from screenshot
   static const Color _primaryPurple = Color(0xFF5E35B1); // Deep Purple
-  static const Color _lightPurpleBg = Color(0xFFF5F3FF); // Lavender light bg
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _nameController.dispose();
     _rollController.dispose();
     super.dispose();
@@ -50,10 +52,16 @@ class _AuthScreenState extends State<AuthScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
     if (_isSignUp) {
+      // Check confirm password match
+      if (_passwordController.text != _confirmPasswordController.text) {
+        _showError('Passwords do not match.');
+        return;
+      }
+
       final success = await auth.register(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        rollNo: _rollController.text.trim().isEmpty ? '23CSB1042' : _rollController.text.trim(),
+        rollNo: _rollController.text.trim(),
         department: 'Computer Science & Engineering',
         semester: '6th Semester',
         phone: '+91 98765 43210',
@@ -63,6 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (!mounted) return;
       if (success) {
+        _showSuccess('Account created successfully! Welcome!');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const MainNavScreen()),
@@ -88,26 +97,38 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _handleQuickDemo(bool isCoordinator) async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    if (isCoordinator) {
-      await auth.demoLoginAsCoordinator();
-    } else {
-      await auth.demoLoginAsStudent();
-    }
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainNavScreen()),
-    );
-  }
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
         backgroundColor: Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -181,103 +202,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Demo Quick Login Box (From Screenshot)
-                      if (!_isSignUp) ...[
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _lightPurpleBg,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: _primaryPurple.withAlpha(30)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Demo Quick Login:',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: _primaryPurple,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Material(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(8),
-                                        onTap: () => _handleQuickDemo(false),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 8),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey.shade300),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: const [
-                                              Icon(Icons.person, size: 14, color: _primaryPurple),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Student Demo',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Material(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(8),
-                                        onTap: () => _handleQuickDemo(true),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 8),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.grey.shade300),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: const [
-                                              Icon(Icons.admin_panel_settings, size: 14, color: _primaryPurple),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Admin Demo',
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black87,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                      ],
-
                       // Sign Up extra fields
                       if (_isSignUp) ...[
                         _buildInputField(
@@ -336,7 +260,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         keyboardType: TextInputType.emailAddress,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'Please enter your email';
-                          if (!v.contains('@')) return 'Enter a valid email address';
+                          if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(v.trim())) {
+                            return 'Enter a valid email address';
+                          }
                           return null;
                         },
                       ),
@@ -361,6 +287,30 @@ class _AuthScreenState extends State<AuthScreen> {
                           return null;
                         },
                       ),
+
+                      // Confirm Password Field (only for Sign Up)
+                      if (_isSignUp) ...[
+                        const SizedBox(height: 14),
+                        _buildInputField(
+                          controller: _confirmPasswordController,
+                          hintText: 'Confirm Password',
+                          prefixIcon: Icons.lock_outline_rounded,
+                          obscureText: _obscureConfirmPassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                            onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                          ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Please confirm your password';
+                            if (v != _passwordController.text) return 'Passwords do not match';
+                            return null;
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 20),
 
                       // Sign In / Sign Up Purple Button
@@ -414,6 +364,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               setState(() {
                                 _isSignUp = !_isSignUp;
                                 _formKey.currentState?.reset();
+                                // Clear fields when switching
+                                _passwordController.clear();
+                                _confirmPasswordController.clear();
                               });
                             },
                             child: Text(
